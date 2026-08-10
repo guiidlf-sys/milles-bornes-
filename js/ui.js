@@ -11,12 +11,16 @@ import {
 } from './game.js';
 import { chooseAiAction } from './ai.js';
 
+const VEHICLES = ['🚗', '🚙', '🚕', '🏎️'];
+
 let state = null;
 let onRestart = null;
 let revealedFor = null; // id du joueur humain dont la main est actuellement révélée (mode passe-et-joue)
 let aiTimer = null;
+let helpOpen = false;
 
 const els = {
+  trackLanes: document.getElementById('track-lanes'),
   opponentsRow: document.getElementById('opponents-row'),
   deckPile: document.getElementById('deck-pile'),
   deckCount: document.getElementById('deck-count'),
@@ -27,9 +31,17 @@ const els = {
   actionHint: document.getElementById('action-hint'),
   handRow: document.getElementById('hand-row'),
   drawBtn: document.getElementById('draw-btn'),
+  playBtn: document.getElementById('play-btn'),
   discardBtn: document.getElementById('discard-btn'),
   modalRoot: document.getElementById('modal-root'),
+  helpModalRoot: document.getElementById('help-modal-root'),
   restartBtn: document.getElementById('restart-btn'),
+  helpBtn: document.getElementById('help-btn'),
+};
+
+els.helpBtn.onclick = () => {
+  helpOpen = true;
+  renderHelp();
 };
 
 export function mountGame(gameState, restartCallback) {
@@ -47,6 +59,16 @@ export function mountGame(gameState, restartCallback) {
   els.drawBtn.onclick = () => {
     if (canHumanAct()) {
       drawCardAction(state, state.activePlayerId);
+      render();
+    }
+  };
+  els.playBtn.onclick = () => {
+    if (!canHumanAct() || !state.selectedCardId) return;
+    const player = getActivePlayer(state);
+    const card = state.cardsById.get(state.selectedCardId);
+    const evalRes = evaluatePlay(state, player, card);
+    if (evalRes.ok && !evalRes.needsTarget) {
+      playCardAction(state, player.id, card.id, null);
       render();
     }
   };
@@ -94,11 +116,81 @@ function chip(info) {
 
 function render() {
   if (!state) return;
+  renderTrack();
   renderOpponents();
   renderTable();
   renderActivePanel();
   renderModals();
   maybeRunAi();
+}
+
+function renderTrack() {
+  els.trackLanes.innerHTML = '';
+  for (let i = 0; i < state.players.length; i++) {
+    const p = state.players[i];
+    const pct = Math.min(100, (p.distance / GOAL) * 100);
+
+    const lane = document.createElement('div');
+    lane.className = `track-lane${p.id === state.activePlayerId ? ' is-active' : ''}`;
+
+    const name = document.createElement('div');
+    name.className = 'lane-name';
+    name.textContent = `${p.name}${p.isAI ? ' 🤖' : ''}`;
+    lane.appendChild(name);
+
+    const road = document.createElement('div');
+    road.className = 'lane-road';
+    const inner = document.createElement('div');
+    inner.className = 'lane-track-inner';
+    const car = document.createElement('div');
+    car.className = 'lane-car';
+    car.style.left = `${pct}%`;
+    car.textContent = VEHICLES[i % VEHICLES.length];
+    inner.appendChild(car);
+    road.appendChild(inner);
+    const finish = document.createElement('div');
+    finish.className = 'lane-finish';
+    road.appendChild(finish);
+    lane.appendChild(road);
+
+    const dist = document.createElement('div');
+    dist.className = 'lane-dist';
+    dist.textContent = `${p.distance} km`;
+    lane.appendChild(dist);
+
+    els.trackLanes.appendChild(lane);
+  }
+}
+
+function renderHelp() {
+  els.helpModalRoot.innerHTML = '';
+  if (!helpOpen) return;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal-box text-left">
+      <h3>Comment jouer ?</h3>
+      <ol class="help-steps">
+        <li>Piochez une carte pour commencer votre tour.</li>
+        <li>Sélectionnez une carte de votre main.</li>
+        <li>Jouez-la (choisissez un adversaire pour une Attaque) ou défaussez-la.</li>
+      </ol>
+      <ul class="help-list">
+        <li><span class="swatch swatch-distance"></span> <span><strong>Distance</strong> — avance ta voiture. Il faut d'abord jouer un Feu Vert pour démarrer.</span></li>
+        <li><span class="swatch swatch-hazard"></span> <span><strong>Attaque</strong> — bloque ou ralentit un adversaire en route.</span></li>
+        <li><span class="swatch swatch-remedy"></span> <span><strong>Parade</strong> — répare ta voiture pour repartir.</span></li>
+        <li><span class="swatch swatch-safety"></span> <span><strong>Botte</strong> — te protège pour toujours contre une attaque et te fait rejouer aussitôt.</span></li>
+      </ul>
+      <p class="muted">Premier à exactement 1000 bornes : victoire !</p>
+    </div>`;
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'btn btn-primary';
+  closeBtn.textContent = 'Compris !';
+  closeBtn.style.marginTop = '14px';
+  closeBtn.onclick = () => { helpOpen = false; renderHelp(); };
+  backdrop.querySelector('.modal-box').appendChild(closeBtn);
+  backdrop.onclick = (e) => { if (e.target === backdrop) { helpOpen = false; renderHelp(); } };
+  els.helpModalRoot.appendChild(backdrop);
 }
 
 function renderOpponents() {
@@ -126,11 +218,6 @@ function renderOpponents() {
     head.className = 'opp-head';
     head.innerHTML = `<span class="opp-name">${p.name}${p.isAI ? ' 🤖' : ''}</span><span class="opp-dist">${p.distance} / ${GOAL}</span>`;
     card.appendChild(head);
-
-    const bar = document.createElement('div');
-    bar.className = 'opp-bar';
-    bar.innerHTML = `<div class="opp-bar-fill" style="width:${Math.min(100, (p.distance / GOAL) * 100)}%"></div>`;
-    card.appendChild(bar);
 
     const statusRow = document.createElement('div');
     statusRow.className = 'opp-status-row';
@@ -197,6 +284,7 @@ function renderActivePanel() {
 
   els.handRow.innerHTML = '';
   els.actionHint.textContent = '';
+  els.playBtn.disabled = true;
 
   if (state.phase !== 'playing') {
     els.handRow.innerHTML = '';
@@ -245,8 +333,9 @@ function renderActivePanel() {
   if (state.turnStage === 'needs-draw') {
     els.actionHint.textContent = 'Cliquez sur "Piocher" ou sur la pioche pour commencer votre tour.';
     els.discardBtn.disabled = true;
+    els.playBtn.disabled = true;
     for (const cardId of player.hand) {
-      els.handRow.appendChild(handCardEl(player, state.cardsById.get(cardId), false));
+      els.handRow.appendChild(handCardEl(state.cardsById.get(cardId), false));
     }
     return;
   }
@@ -258,22 +347,23 @@ function renderActivePanel() {
 
   for (const cardId of player.hand) {
     const card = state.cardsById.get(cardId);
-    els.handRow.appendChild(handCardEl(player, card, card.id === state.selectedCardId));
+    els.handRow.appendChild(handCardEl(card, card.id === state.selectedCardId));
   }
 
   els.discardBtn.disabled = !selectedCard;
+  els.playBtn.disabled = !selectedCard || !evalRes.ok || evalRes.needsTarget;
 
   if (!selectedCard) {
-    els.actionHint.textContent = 'Sélectionnez une carte à jouer ou à défausser.';
+    els.actionHint.textContent = 'Sélectionnez une carte ci-dessous, puis jouez-la ou défaussez-la.';
   } else if (!evalRes.ok) {
     els.actionHint.textContent = `⚠️ ${evalRes.reason} — vous pouvez la défausser.`;
   } else if (evalRes.needsTarget) {
     const targets = getValidTargets(state, player, selectedCard);
     els.actionHint.textContent = targets.length
-      ? 'Choisissez une cible ci-dessus pour jouer cette attaque.'
+      ? '👉 Cliquez sur un adversaire ci-dessus pour jouer cette attaque.'
       : 'Aucune cible valide pour cette attaque — vous pouvez la défausser.';
   } else {
-    els.actionHint.textContent = `Carte valide. Cliquez à nouveau sur la carte pour la jouer.`;
+    els.actionHint.textContent = 'Carte valide : cliquez sur "Jouer la carte sélectionnée".';
   }
 }
 
@@ -283,21 +373,10 @@ function backCard() {
   return div;
 }
 
-function handCardEl(player, card, isSelected) {
+function handCardEl(card, isSelected) {
   const el = cardFace(card, `hand-card${isSelected ? ' selected' : ''}`);
   el.onclick = () => {
-    if (state.selectedCardId === card.id) {
-      // Deuxième clic : tenter de jouer si pas de cible requise
-      const evalRes = evaluatePlay(state, player, card);
-      if (evalRes.ok && !evalRes.needsTarget) {
-        playCardAction(state, player.id, card.id, null);
-        render();
-        return;
-      }
-      // Sinon on laisse sélectionné (cible requise ou invalide)
-      return;
-    }
-    state.selectedCardId = card.id;
+    state.selectedCardId = state.selectedCardId === card.id ? null : card.id;
     render();
   };
   return el;

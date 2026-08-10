@@ -11,13 +11,22 @@
 <div id="app">
   <header class="app-header">
     <h1>🏁 Mille Bornes</h1>
-    <button id="restart-btn" class="btn btn-ghost" hidden>Nouvelle partie</button>
+    <div class="header-actions">
+      <button id="help-btn" class="btn btn-ghost btn-sm" title="Comment jouer ?">? Règles</button>
+      <button id="restart-btn" class="btn btn-ghost" hidden>Nouvelle partie</button>
+    </div>
   </header>
 
   <main id="setup-screen" class="screen">
     <div class="setup-card">
       <h2>Préparer la course</h2>
       <p class="muted">De 2 à 4 joueurs. Le premier à exactement 1000 bornes gagne !</p>
+      <ul class="rules-mini">
+        <li><span class="swatch swatch-distance"></span> Distance : avance ta voiture</li>
+        <li><span class="swatch swatch-hazard"></span> Attaque : bloque un adversaire</li>
+        <li><span class="swatch swatch-remedy"></span> Parade : répare ta voiture</li>
+        <li><span class="swatch swatch-safety"></span> Botte : protège pour toujours et fait rejouer</li>
+      </ul>
 
       <label class="field">
         <span>Nombre de joueurs</span>
@@ -35,6 +44,14 @@
   </main>
 
   <main id="game-screen" class="screen" hidden>
+    <section class="track-panel">
+      <div class="track-header">
+        <span>Départ</span>
+        <span>1000 bornes 🏁</span>
+      </div>
+      <div id="track-lanes" class="track-lanes"></div>
+    </section>
+
     <div id="opponents-row" class="opponents-row"></div>
 
     <div class="table-row">
@@ -59,11 +76,13 @@
       <div id="hand-row" class="hand-row"></div>
       <div id="controls-row" class="controls-row">
         <button id="draw-btn" class="btn btn-primary">Piocher</button>
+        <button id="play-btn" class="btn btn-primary" disabled>Jouer la carte sélectionnée</button>
         <button id="discard-btn" class="btn btn-secondary" disabled>Défausser la carte sélectionnée</button>
       </div>
     </section>
   </main>
 
+  <div id="help-modal-root"></div>
   <div id="modal-root"></div>
 </div>
 
