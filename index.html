@@ -18,19 +18,50 @@
   </header>
 
   <main id="mode-screen" class="screen">
+    <div class="hero">
+      <div class="hero-track" aria-hidden="true">
+        <span class="hero-car">🚙</span><span class="hero-car">🚗</span><span class="hero-car">🏎️</span><span class="hero-car">🚕</span>
+      </div>
+      <h2 class="hero-title">Prêt pour la course ?</h2>
+      <p class="hero-tagline">Attaquez vos adversaires, réparez votre voiture au bon moment, et filez pile à 1000 bornes !</p>
+    </div>
+
+    <div class="card-showcase" aria-hidden="true">
+      <div class="card card-distance showcase-card"><div class="card-icon">🛣️</div><div class="card-label">100 km</div></div>
+      <div class="card card-hazard showcase-card"><div class="card-icon">🛑</div><div class="card-label">Stop</div></div>
+      <div class="card card-remedy showcase-card"><div class="card-icon">🟢</div><div class="card-label">Feu Vert</div></div>
+      <div class="card card-safety showcase-card"><div class="card-icon">🚦</div><div class="card-label">Priorité</div></div>
+    </div>
+
+    <div class="highlight-row">
+      <span class="highlight-pill">⚡ Coup Fourré</span>
+      <span class="highlight-pill">🏆 Score officiel</span>
+      <span class="highlight-pill">🤝 Passe-et-joue local</span>
+      <span class="highlight-pill">🎯 1000 bornes pile</span>
+    </div>
+
     <div class="setup-card mode-card">
       <h2>Choisissez un mode</h2>
-      <p class="muted">Le premier à exactement 1000 bornes gagne !</p>
       <div class="mode-grid">
         <button id="mode-solo-btn" class="mode-btn">
           <span class="mode-emoji">🎮</span>
           <span class="mode-name">Solo</span>
-          <span class="mode-sub">Vous contre 1 à 3 IA</span>
+          <span class="mode-sub">Vous contre l'IA</span>
+          <ul class="mode-features">
+            <li>1 à 3 adversaires IA</li>
+            <li>L'IA attaque et se défend</li>
+            <li>Partie rapide, seul(e)</li>
+          </ul>
         </button>
         <button id="mode-multi-btn" class="mode-btn">
           <span class="mode-emoji">👥</span>
           <span class="mode-name">Multijoueur</span>
-          <span class="mode-sub">Plusieurs joueurs sur cet appareil, bots activables</span>
+          <span class="mode-sub">Sur cet appareil</span>
+          <ul class="mode-features">
+            <li>2 à 4 joueurs</li>
+            <li>Bot IA activable par siège</li>
+            <li>Mains cachées à chaque tour</li>
+          </ul>
         </button>
       </div>
     </div>

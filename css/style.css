@@ -75,6 +75,94 @@ html, body {
 .muted { color: var(--muted); }
 .field-hint { font-size: 0.82rem; margin: -6px 0 10px; }
 
+/* ---------- Hero / menu enrichi ---------- */
+.hero { text-align: center; padding: 18px 0 6px; }
+.hero-track {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  font-size: 1.9rem;
+  margin-bottom: 10px;
+}
+.hero-car { display: inline-block; animation: bob 1.6s ease-in-out infinite; }
+.hero-car:nth-child(2) { animation-delay: 0.15s; }
+.hero-car:nth-child(3) { animation-delay: 0.3s; }
+.hero-car:nth-child(4) { animation-delay: 0.45s; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-car { animation: none; }
+}
+.hero-title {
+  margin: 0 0 8px;
+  font-size: 1.7rem;
+  text-wrap: balance;
+}
+.hero-tagline {
+  margin: 0 auto 6px;
+  max-width: 480px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.card-showcase {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 22px 0 10px;
+}
+.showcase-card {
+  width: 78px;
+  height: 112px;
+  font-size: 0.62rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
+.showcase-card .card-icon { font-size: 1.4rem; }
+.card-showcase .showcase-card:nth-child(1) { transform: rotate(-6deg); }
+.card-showcase .showcase-card:nth-child(2) { transform: rotate(-2deg) translateY(-5px); }
+.card-showcase .showcase-card:nth-child(3) { transform: rotate(3deg); }
+.card-showcase .showcase-card:nth-child(4) { transform: rotate(7deg) translateY(-5px); }
+.showcase-card:hover {
+  transform: translateY(-10px) rotate(0deg) !important;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
+}
+
+.highlight-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 26px;
+}
+.highlight-pill {
+  background: var(--panel-light);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mode-features {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  font-size: 0.74rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+.mode-features li { display: flex; align-items: baseline; gap: 5px; }
+.mode-features li::before { content: "✓"; color: var(--green); font-weight: 700; }
+
 .mode-card { text-align: center; }
 .mode-grid {
   display: flex;
