@@ -38,14 +38,14 @@ const DEFS = [
   { type: 'hazard', subtype: 'out-of-gas', count: 3, label: "Panne d'Essence", icon: '⛽', desc: 'Immobilise l’adversaire.' },
   { type: 'hazard', subtype: 'flat-tire', count: 3, label: 'Crevaison', icon: '🛞', desc: 'Immobilise l’adversaire.' },
   { type: 'hazard', subtype: 'speed-limit', count: 4, label: 'Limite de Vitesse', icon: '🐢', desc: 'Limite à 50 km max.' },
-  { type: 'hazard', subtype: 'stop', count: 5, label: 'Stop', icon: '🛑', desc: 'Immobilise l’adversaire.' },
+  { type: 'hazard', subtype: 'stop', count: 5, label: 'Stop', icon: '🚧', desc: 'Immobilise l’adversaire.' },
 
   // Parades (remedies)
   { type: 'remedy', subtype: 'repairs', count: 6, label: 'Réparation', icon: '🔧', desc: "Répare l'accident." },
   { type: 'remedy', subtype: 'gasoline', count: 6, label: 'Essence', icon: '⛽', desc: "Répare la panne d'essence." },
   { type: 'remedy', subtype: 'spare-tire', count: 6, label: 'Roue de Secours', icon: '🛞', desc: 'Répare la crevaison.' },
   { type: 'remedy', subtype: 'end-of-limit', count: 6, label: 'Fin de Limite', icon: '🏁', desc: 'Lève la limite de vitesse.' },
-  { type: 'remedy', subtype: 'roll', count: 14, label: 'Feu Vert', icon: '🟢', desc: 'Démarre ou relance la voiture.' },
+  { type: 'remedy', subtype: 'roll', count: 14, label: 'Feu Vert', icon: '✅', desc: 'Démarre ou relance la voiture.' },
 
   // Bottes (safety)
   { type: 'safety', subtype: 'right-of-way', count: 1, label: 'Priorité', icon: '🚦', desc: 'Immunise contre Stop et Limite de Vitesse.' },

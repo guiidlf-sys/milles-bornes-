@@ -16,12 +16,47 @@
   --road: #34393f;
   --road-dark: #262a2f;
   --road-line: rgba(255, 255, 255, 0.4);
+  --card-tint-distance: #e9f0fa;
+  --card-tint-hazard: #fbeaea;
+  --card-tint-remedy: #eaf6ef;
+  --card-tint-safety: #fdf6e6;
   --radius: 10px;
   --shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   --panel-bg: linear-gradient(165deg, var(--panel-glow) 0%, var(--panel) 60%);
 }
 
+/* Thèmes de fond selon le véhicule choisi */
+html[data-vehicle="boat"] {
+  --bg-top: #16323d;
+  --bg-mid: #0f232c;
+  --bg-bottom: #081319;
+  --road: #1d4f63;
+  --road-dark: #123542;
+  --road-line: rgba(255, 255, 255, 0.5);
+}
+html[data-vehicle="plane"] {
+  --bg-top: #1b2740;
+  --bg-mid: #131b2e;
+  --bg-bottom: #0a0e1a;
+  --road: #2a2f52;
+  --road-dark: #1c2038;
+  --road-line: rgba(255, 255, 255, 0.45);
+}
+html[data-vehicle="bike"] {
+  --bg-top: #1c2b1e;
+  --bg-mid: #141f16;
+  --bg-bottom: #0b120c;
+  --road: #2f4a33;
+  --road-dark: #223524;
+  --road-line: rgba(255, 255, 255, 0.4);
+}
+
 * { box-sizing: border-box; }
+
+@keyframes bgDrift {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 0 0, 300px 300px, 0 0; }
+}
 
 html, body {
   margin: 0;
@@ -31,8 +66,13 @@ html, body {
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 2px, transparent 2px, transparent 15px),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bottom) 100%);
   background-attachment: fixed;
+  animation: bgDrift 55s linear infinite;
+  transition: background 0.6s ease;
   color: var(--text);
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, body { animation: none; }
 }
 
 #app {
@@ -132,7 +172,7 @@ html, body {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: default;
 }
-.showcase-card .card-icon { font-size: 1.4rem; }
+.showcase-card .card-icon { font-size: 1.7rem; }
 .card-showcase .showcase-card:nth-child(1) { transform: rotate(-6deg); }
 .card-showcase .showcase-card:nth-child(2) { transform: rotate(-2deg) translateY(-5px); }
 .card-showcase .showcase-card:nth-child(3) { transform: rotate(3deg); }
@@ -241,6 +281,27 @@ html, body {
   color: var(--text);
 }
 
+.vehicle-choices { display: flex; gap: 8px; flex-wrap: wrap; }
+.vehicle-choice {
+  flex: 1 1 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel-light);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 10px 6px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+.vehicle-choice:hover { transform: translateY(-2px); }
+.vehicle-choice.selected { border-color: var(--gold); background: rgba(216, 171, 74, 0.14); }
+.vehicle-emoji { font-size: 1.6rem; }
+
 .seat-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
 .seat-row {
   display: flex;
@@ -306,11 +367,12 @@ html, body {
 
 .lane-road {
   position: relative;
-  height: 40px;
+  height: 54px;
   background: linear-gradient(180deg, var(--road) 0%, var(--road-dark) 100%);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: background 0.6s ease;
 }
 .lane-road::before {
   content: "";
@@ -338,8 +400,9 @@ html, body {
 .lane-car {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
+  /* scaleX(-1) retourne l'émoji (qui pointe vers la gauche par défaut) dans le sens de la course, vers l'arrivée. */
+  transform: translate(-50%, -50%) scaleX(-1);
+  font-size: 2.1rem;
   line-height: 1;
   transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
@@ -435,7 +498,7 @@ html, body {
   border-width: 2px;
   padding: 5px 4px;
 }
-.pile-area .card .card-icon { font-size: 1.35rem; margin-bottom: 2px; }
+.pile-area .card .card-icon { font-size: 1.6rem; margin-bottom: 2px; }
 .pile-stack { text-align: center; }
 .pile-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
 .pile-count { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
@@ -465,6 +528,24 @@ html, body {
   margin: 0 -16px -40px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
+.game-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.game-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 2px 9px;
+  border-radius: 6px;
+}
+
 .hand-header { font-weight: 700; margin-bottom: 6px; }
 
 .action-hint {
@@ -517,12 +598,12 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .card { animation: none; }
 }
-.card .card-icon { font-size: 1.9rem; margin-bottom: 4px; }
+.card .card-icon { font-size: 2.3rem; margin-bottom: 4px; }
 .card .card-label { font-weight: 700; }
-.card.card-distance { border-color: var(--blue); }
-.card.card-hazard { border-color: var(--red); }
-.card.card-remedy { border-color: var(--green); }
-.card.card-safety { border-color: var(--gold); background: #fdf6e6; }
+.card.card-distance { border-color: var(--blue); background: var(--card-tint-distance); }
+.card.card-hazard { border-color: var(--red); background: var(--card-tint-hazard); }
+.card.card-remedy { border-color: var(--green); background: var(--card-tint-remedy); }
+.card.card-safety { border-color: var(--gold); background: var(--card-tint-safety); }
 
 .card.card-back {
   background: repeating-linear-gradient(45deg, #2b3038, #2b3038 6px, #333a44 6px, #333a44 12px);
@@ -545,7 +626,7 @@ html, body {
   border-width: 2px;
   padding: 5px 4px;
 }
-.pile-card .card-icon { font-size: 1.35rem; margin-bottom: 2px; }
+.pile-card .card-icon { font-size: 1.6rem; margin-bottom: 2px; }
 
 #deck-pile { cursor: pointer; }
 #deck-pile:disabled { cursor: not-allowed; opacity: 0.5; }
@@ -590,6 +671,25 @@ html, body {
 .score-line span:last-child { font-variant-numeric: tabular-nums; }
 .score-line.nonzero { color: var(--text); }
 
+.stats-wrap { margin-top: 18px; text-align: left; }
+.stats-title { margin: 0 0 8px; font-size: 0.95rem; }
+.stats-scroll { overflow-x: auto; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.stats-table th, .stats-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+.stats-table th {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+}
+.stats-table td:first-child, .stats-table th:first-child { text-align: left; }
+
 .help-list { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .help-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; }
 .help-list .swatch { margin-top: 4px; }
@@ -601,5 +701,6 @@ html, body {
   .player-boards { grid-template-columns: 1fr; }
   .track-lane { grid-template-columns: 88px 1fr 54px; gap: 8px; }
   .lane-name { font-size: 0.74rem; }
-  .lane-car { font-size: 1.2rem; }
+  .lane-car { font-size: 1.7rem; }
+  .lane-road { height: 46px; }
 }

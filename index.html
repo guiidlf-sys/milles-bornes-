@@ -79,6 +79,25 @@
         <li><span class="swatch swatch-safety"></span> Botte : protège pour toujours et fait rejouer</li>
       </ul>
 
+      <div class="field">
+        <span>Véhicule</span>
+        <div id="vehicle-choices" class="vehicle-choices">
+          <button type="button" class="vehicle-choice" data-vehicle="car" aria-pressed="true">
+            <span class="vehicle-emoji">🚗</span><span>Voiture</span>
+          </button>
+          <button type="button" class="vehicle-choice" data-vehicle="boat" aria-pressed="false">
+            <span class="vehicle-emoji">⛵</span><span>Bateau</span>
+          </button>
+          <button type="button" class="vehicle-choice" data-vehicle="plane" aria-pressed="false">
+            <span class="vehicle-emoji">✈️</span><span>Avion</span>
+          </button>
+          <button type="button" class="vehicle-choice" data-vehicle="bike" aria-pressed="false">
+            <span class="vehicle-emoji">🚲</span><span>Vélo</span>
+          </button>
+        </div>
+      </div>
+      <p class="muted field-hint">⏱️ Durée moyenne d'une partie : 15 à 25 minutes.</p>
+
       <div id="solo-fields" hidden>
         <label class="field">
           <span>Votre nom</span>
@@ -125,6 +144,10 @@
     </section>
 
     <section id="active-panel" class="active-panel">
+      <div class="game-meta">
+        <span class="game-timer-label">⏱️ Durée</span>
+        <span id="game-timer" class="game-timer">00:00</span>
+      </div>
       <div class="table-row">
         <div class="pile-area">
           <div class="pile-stack">

@@ -18,11 +18,26 @@ const aiCountSelect = document.getElementById('ai-count');
 const playerCountSelect = document.getElementById('player-count');
 const seatList = document.getElementById('seat-list');
 const startBtn = document.getElementById('start-btn');
+const vehicleChoices = document.getElementById('vehicle-choices');
 
 const DEFAULT_NAMES = ['Vous', 'Joueur 2', 'IA Bruno', 'IA Chloé'];
 const AI_NAMES = ['IA Alice', 'IA Bruno', 'IA Chloé'];
 
 let mode = 'solo'; // 'solo' | 'multi'
+let vehicleType = 'car'; // 'car' | 'boat' | 'plane' | 'bike'
+
+vehicleChoices.addEventListener('click', (e) => {
+  const btn = e.target.closest('.vehicle-choice');
+  if (!btn) return;
+  vehicleType = btn.dataset.vehicle;
+  for (const b of vehicleChoices.querySelectorAll('.vehicle-choice')) {
+    const selected = b === btn;
+    b.classList.toggle('selected', selected);
+    b.setAttribute('aria-pressed', String(selected));
+  }
+  document.documentElement.dataset.vehicle = vehicleType;
+});
+vehicleChoices.querySelector('.vehicle-choice[data-vehicle="car"]').classList.add('selected');
 
 function showScreen(screen) {
   modeScreen.hidden = screen !== 'mode';
@@ -103,7 +118,7 @@ function buildMultiConfigs() {
 }
 
 function startGame(configs) {
-  const state = createGame(configs);
+  const state = createGame(configs, vehicleType);
   showScreen('game');
   mountGame(state, () => {
     restartBtn.hidden = true;

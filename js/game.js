@@ -3,7 +3,7 @@ import { buildDeck, shuffle, HAZARD_TO_SAFETY, SAFETY_COUNTERS } from './cards.j
 const GOAL = 1000;
 const HAND_SIZE = 6;
 
-export function createGame(playerConfigs) {
+export function createGame(playerConfigs, vehicleType = 'car') {
   const deck = shuffle(buildDeck());
 
   const players = playerConfigs.map((cfg, i) => ({
@@ -22,11 +22,13 @@ export function createGame(playerConfigs) {
     count200: 0,
     coupFourreCount: 0,
     everHit: false,
+    attacksPlayed: 0,
   }));
 
   const state = {
     phase: 'playing',
     players,
+    vehicleType,
     cardsById: new Map(),
     deck,
     discardPile: [],
@@ -39,6 +41,8 @@ export function createGame(playerConfigs) {
     pendingCoupFourre: null,
     log: [],
     winnerId: null,
+    startedAt: Date.now(),
+    endedAt: null,
   };
 
   for (const c of deck) state.cardsById.set(c.id, c);
@@ -225,6 +229,7 @@ export function playCardAction(state, playerId, cardId, targetId) {
   if (player.distance >= GOAL) {
     state.phase = 'gameover';
     state.winnerId = player.id;
+    state.endedAt = Date.now();
     logMsg(state, `🏆 ${player.name} atteint ${GOAL} bornes et remporte la course !`);
     return { ok: true };
   }
@@ -298,6 +303,7 @@ function applyEffect(state, player, card, target) {
       break;
     }
     case 'hazard': {
+      player.attacksPlayed += 1;
       target.everHit = true;
       if (card.subtype === 'speed-limit') {
         target.speedPile.push(card);

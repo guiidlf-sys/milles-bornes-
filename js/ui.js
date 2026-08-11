@@ -16,11 +16,18 @@ let onRestart = null;
 let revealedFor = null; // id du joueur humain dont la main est actuellement révélée (mode passe-et-joue)
 let aiTimer = null;
 let helpOpen = false;
+let clockTimer = null;
 
-const VEHICLES = ['🚗', '🚙', '🚕', '🏎️'];
+const VEHICLE_SETS = {
+  car: ['🚗', '🚙', '🚕', '🏎️'],
+  boat: ['⛵', '🚤', '🛥️', '🛶'],
+  plane: ['✈️', '🛩️', '🚁', '🛫'],
+  bike: ['🚲', '🛵', '🏍️', '🛴'],
+};
 
 const els = {
   trackLanes: document.getElementById('track-lanes'),
+  gameTimer: document.getElementById('game-timer'),
   playerBoards: document.getElementById('player-boards'),
   deckPile: document.getElementById('deck-pile'),
   deckCount: document.getElementById('deck-count'),
@@ -39,6 +46,13 @@ const els = {
   helpBtn: document.getElementById('help-btn'),
 };
 
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 els.helpBtn.onclick = () => {
   helpOpen = true;
   renderHelp();
@@ -48,8 +62,24 @@ export function mountGame(gameState, restartCallback) {
   state = gameState;
   onRestart = restartCallback;
   revealedFor = null;
+  document.documentElement.dataset.vehicle = state.vehicleType || 'car';
   els.restartBtn.hidden = false;
-  els.restartBtn.onclick = () => onRestart();
+  els.restartBtn.onclick = () => {
+    stopClock();
+    onRestart();
+  };
+
+  stopClock();
+  const tick = () => {
+    if (!els.gameTimer) return;
+    const end = state.endedAt || Date.now();
+    els.gameTimer.textContent = formatDuration(end - state.startedAt);
+  };
+  tick();
+  clockTimer = setInterval(() => {
+    tick();
+    if (state.phase !== 'playing') stopClock();
+  }, 1000);
   els.deckPile.onclick = () => {
     if (canHumanAct() && state.turnStage === 'needs-draw') {
       drawCardAction(state, state.activePlayerId);
@@ -81,6 +111,13 @@ export function mountGame(gameState, restartCallback) {
   render();
 }
 
+function stopClock() {
+  if (clockTimer) {
+    clearInterval(clockTimer);
+    clockTimer = null;
+  }
+}
+
 function canHumanAct() {
   const p = getActivePlayer(state);
   return state.phase === 'playing' && !p.isAI && !state.pendingCoupFourre;
@@ -109,6 +146,7 @@ function render() {
 
 function renderTrack() {
   els.trackLanes.innerHTML = '';
+  const vehicles = VEHICLE_SETS[state.vehicleType] || VEHICLE_SETS.car;
   for (let i = 0; i < state.players.length; i++) {
     const p = state.players[i];
     const pct = Math.min(100, (p.distance / GOAL) * 100);
@@ -128,7 +166,7 @@ function renderTrack() {
     const car = document.createElement('div');
     car.className = 'lane-car';
     car.style.left = `${pct}%`;
-    car.textContent = VEHICLES[i % VEHICLES.length];
+    car.textContent = vehicles[i % vehicles.length];
     inner.appendChild(car);
     road.appendChild(inner);
     const finish = document.createElement('div');
@@ -458,11 +496,12 @@ function renderModals() {
   if (state.phase === 'gameover') {
     const winner = state.players.find((p) => p.id === state.winnerId);
     const scores = computeFinalScores(state);
+    const duration = formatDuration((state.endedAt || Date.now()) - state.startedAt);
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     const box = document.createElement('div');
     box.className = 'modal-box';
-    box.innerHTML = `<h3>🏆 ${winner.name} remporte la course !</h3><p class="muted">Feuille de score officielle</p>`;
+    box.innerHTML = `<h3>🏆 ${winner.name} remporte la course !</h3><p class="muted">Partie jouée en ${duration} — Feuille de score officielle</p>`;
 
     const sheet = document.createElement('div');
     sheet.className = 'score-sheet';
@@ -495,6 +534,7 @@ function renderModals() {
       sheet.appendChild(row);
     }
     box.appendChild(sheet);
+    box.appendChild(buildStatsTable(scores));
 
     const actions = document.createElement('div');
     actions.className = 'modal-actions';
@@ -507,6 +547,50 @@ function renderModals() {
     backdrop.appendChild(box);
     els.modalRoot.appendChild(backdrop);
   }
+}
+
+function buildStatsTable(scores) {
+  const wrap = document.createElement('div');
+  wrap.className = 'stats-wrap';
+
+  const title = document.createElement('h4');
+  title.className = 'stats-title';
+  title.textContent = 'Statistiques de la partie';
+  wrap.appendChild(title);
+
+  const scroll = document.createElement('div');
+  scroll.className = 'stats-scroll';
+  const table = document.createElement('table');
+  table.className = 'stats-table';
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Joueur</th>
+        <th>Km</th>
+        <th>Attaques</th>
+        <th>Bottes</th>
+        <th>Coup Fourré</th>
+        <th>Cartes en main</th>
+      </tr>
+    </thead>
+  `;
+  const tbody = document.createElement('tbody');
+  for (const { player } of scores) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${player.name}${player.isAI ? ' 🤖' : ''}</td>
+      <td>${player.distance}</td>
+      <td>${player.attacksPlayed}</td>
+      <td>${player.safetyCards.length}</td>
+      <td>${player.coupFourreCount}</td>
+      <td>${player.hand.length}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  scroll.appendChild(table);
+  wrap.appendChild(scroll);
+  return wrap;
 }
 
 function maybeRunAi() {
