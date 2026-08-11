@@ -17,7 +17,10 @@ let revealedFor = null; // id du joueur humain dont la main est actuellement ré
 let aiTimer = null;
 let helpOpen = false;
 
+const VEHICLES = ['🚗', '🚙', '🚕', '🏎️'];
+
 const els = {
+  trackLanes: document.getElementById('track-lanes'),
   playerBoards: document.getElementById('player-boards'),
   deckPile: document.getElementById('deck-pile'),
   deckCount: document.getElementById('deck-count'),
@@ -94,11 +97,52 @@ function cardFace(card, extraClass) {
 
 function render() {
   if (!state) return;
+  renderTrack();
   renderBoard();
   renderTable();
   renderActivePanel();
   renderModals();
   maybeRunAi();
+}
+
+// ---------- Piste de course ----------
+
+function renderTrack() {
+  els.trackLanes.innerHTML = '';
+  for (let i = 0; i < state.players.length; i++) {
+    const p = state.players[i];
+    const pct = Math.min(100, (p.distance / GOAL) * 100);
+
+    const lane = document.createElement('div');
+    lane.className = `track-lane${p.id === state.activePlayerId ? ' is-active' : ''}`;
+
+    const name = document.createElement('div');
+    name.className = 'lane-name';
+    name.textContent = `${p.name}${p.isAI ? ' 🤖' : ''}`;
+    lane.appendChild(name);
+
+    const road = document.createElement('div');
+    road.className = 'lane-road';
+    const inner = document.createElement('div');
+    inner.className = 'lane-track-inner';
+    const car = document.createElement('div');
+    car.className = 'lane-car';
+    car.style.left = `${pct}%`;
+    car.textContent = VEHICLES[i % VEHICLES.length];
+    inner.appendChild(car);
+    road.appendChild(inner);
+    const finish = document.createElement('div');
+    finish.className = 'lane-finish';
+    road.appendChild(finish);
+    lane.appendChild(road);
+
+    const dist = document.createElement('div');
+    dist.className = 'lane-dist';
+    dist.textContent = `${p.distance} km`;
+    lane.appendChild(dist);
+
+    els.trackLanes.appendChild(lane);
+  }
 }
 
 // ---------- Plateau : tableau de chaque joueur ----------
