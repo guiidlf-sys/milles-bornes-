@@ -423,9 +423,19 @@ html, body {
   gap: 16px;
   align-items: flex-start;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-wrap: wrap;
 }
 .pile-area { display: flex; gap: 20px; }
+.pile-area .card {
+  width: 74px;
+  height: 104px;
+  font-size: 0.6rem;
+  border-width: 2px;
+  padding: 5px 4px;
+}
+.pile-area .card .card-icon { font-size: 1.35rem; margin-bottom: 2px; }
 .pile-stack { text-align: center; }
 .pile-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
 .pile-count { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
@@ -433,7 +443,7 @@ html, body {
 .log-panel {
   flex: 1;
   min-width: 220px;
-  max-height: 130px;
+  max-height: 90px;
   overflow-y: auto;
   background: rgba(0,0,0,0.25);
   border-radius: var(--radius);
