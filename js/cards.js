@@ -45,10 +45,10 @@ const DEFS = [
   { type: 'remedy', subtype: 'gasoline', count: 6, label: 'Essence', icon: '⛽', desc: "Répare la panne d'essence." },
   { type: 'remedy', subtype: 'spare-tire', count: 6, label: 'Roue de Secours', icon: '🛞', desc: 'Répare la crevaison.' },
   { type: 'remedy', subtype: 'end-of-limit', count: 6, label: 'Fin de Limite', icon: '🏁', desc: 'Lève la limite de vitesse.' },
-  { type: 'remedy', subtype: 'roll', count: 14, label: 'Feu Vert', icon: '✅', desc: 'Démarre ou relance la voiture.' },
+  { type: 'remedy', subtype: 'roll', count: 14, label: 'Feu Vert', icon: '🚦', desc: 'Démarre ou relance la voiture.' },
 
   // Bottes (safety)
-  { type: 'safety', subtype: 'right-of-way', count: 1, label: 'Priorité', icon: '🚦', desc: 'Immunise contre Stop et Limite de Vitesse.' },
+  { type: 'safety', subtype: 'right-of-way', count: 1, label: 'Priorité', icon: '🔶', desc: 'Immunise contre Stop et Limite de Vitesse.' },
   { type: 'safety', subtype: 'extra-tank', count: 1, label: 'Réservoir Supplémentaire', icon: '⛽', desc: "Immunise contre la panne d'essence." },
   { type: 'safety', subtype: 'puncture-proof', count: 1, label: 'Increvable', icon: '🛡️', desc: 'Immunise contre la crevaison.' },
   { type: 'safety', subtype: 'driving-ace', count: 1, label: 'As du Volant', icon: '🏎️', desc: "Immunise contre l'accident." },
