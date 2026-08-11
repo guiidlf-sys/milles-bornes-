@@ -2,16 +2,14 @@ import {
   GOAL,
   getActivePlayer,
   evaluatePlay,
-  evaluateHazardTarget,
   getValidTargets,
   drawCardAction,
   discardCardAction,
   playCardAction,
   resolveCoupFourreAction,
+  computeFinalScores,
 } from './game.js';
 import { chooseAiAction } from './ai.js';
-
-const VEHICLES = ['🚗', '🚙', '🚕', '🏎️'];
 
 let state = null;
 let onRestart = null;
@@ -20,14 +18,13 @@ let aiTimer = null;
 let helpOpen = false;
 
 const els = {
-  trackLanes: document.getElementById('track-lanes'),
-  opponentsRow: document.getElementById('opponents-row'),
+  playerBoards: document.getElementById('player-boards'),
   deckPile: document.getElementById('deck-pile'),
   deckCount: document.getElementById('deck-count'),
   discardPile: document.getElementById('discard-pile'),
   discardCount: document.getElementById('discard-count'),
   logPanel: document.getElementById('log-panel'),
-  activeTableau: document.getElementById('active-tableau'),
+  handHeader: document.getElementById('hand-header'),
   actionHint: document.getElementById('action-hint'),
   handRow: document.getElementById('hand-row'),
   drawBtn: document.getElementById('draw-btn'),
@@ -86,18 +83,6 @@ function canHumanAct() {
   return state.phase === 'playing' && !p.isAI && !state.pendingCoupFourre;
 }
 
-function battleStatusInfo(player) {
-  if (player.battleStatus === 'unstarted') return { icon: '🚦', label: 'À l’arrêt', kind: 'warn' };
-  if (player.battleStatus === 'rolling') return { icon: '🟢', label: 'En route', kind: 'ok' };
-  const info = state.subtypeInfo[player.battleStatus];
-  return { icon: info.icon, label: info.label, kind: 'warn' };
-}
-
-function speedStatusInfo(player) {
-  if (player.speedStatus === 'limited') return { icon: '🐢', label: 'Limité à 50', kind: 'warn' };
-  return null;
-}
-
 function cardFace(card, extraClass) {
   const div = document.createElement('div');
   div.className = `card card-${card.type}${extraClass ? ' ' + extraClass : ''}`;
@@ -107,59 +92,132 @@ function cardFace(card, extraClass) {
   return div;
 }
 
-function chip(info) {
-  const span = document.createElement('span');
-  span.className = `status-chip ${info.kind}`;
-  span.textContent = `${info.icon} ${info.label}`;
-  return span;
-}
-
 function render() {
   if (!state) return;
-  renderTrack();
-  renderOpponents();
+  renderBoard();
   renderTable();
   renderActivePanel();
   renderModals();
   maybeRunAi();
 }
 
-function renderTrack() {
-  els.trackLanes.innerHTML = '';
-  for (let i = 0; i < state.players.length; i++) {
-    const p = state.players[i];
-    const pct = Math.min(100, (p.distance / GOAL) * 100);
+// ---------- Plateau : tableau de chaque joueur ----------
 
-    const lane = document.createElement('div');
-    lane.className = `track-lane${p.id === state.activePlayerId ? ' is-active' : ''}`;
-
-    const name = document.createElement('div');
-    name.className = 'lane-name';
-    name.textContent = `${p.name}${p.isAI ? ' 🤖' : ''}`;
-    lane.appendChild(name);
-
-    const road = document.createElement('div');
-    road.className = 'lane-road';
-    const inner = document.createElement('div');
-    inner.className = 'lane-track-inner';
-    const car = document.createElement('div');
-    car.className = 'lane-car';
-    car.style.left = `${pct}%`;
-    car.textContent = VEHICLES[i % VEHICLES.length];
-    inner.appendChild(car);
-    road.appendChild(inner);
-    const finish = document.createElement('div');
-    finish.className = 'lane-finish';
-    road.appendChild(finish);
-    lane.appendChild(road);
-
-    const dist = document.createElement('div');
-    dist.className = 'lane-dist';
-    dist.textContent = `${p.distance} km`;
-    lane.appendChild(dist);
-
-    els.trackLanes.appendChild(lane);
+function renderBoard() {
+  els.playerBoards.innerHTML = '';
+  const activePlayer = getActivePlayer(state);
+  const selectedCard = state.selectedCardId ? state.cardsById.get(state.selectedCardId) : null;
+  let validTargetIds = new Set();
+  if (selectedCard && selectedCard.type === 'hazard' && !activePlayer.isAI && !state.pendingCoupFourre) {
+    validTargetIds = new Set(getValidTargets(state, activePlayer, selectedCard).map((p) => p.id));
   }
+
+  for (const p of state.players) {
+    const isActive = p.id === state.activePlayerId;
+    const canTarget = validTargetIds.has(p.id);
+    const board = document.createElement('div');
+    board.className = `board-card${isActive ? ' is-active' : ''}${canTarget ? ' can-target' : ''}`;
+    if (canTarget) {
+      board.onclick = () => {
+        playCardAction(state, activePlayer.id, selectedCard.id, p.id);
+        render();
+      };
+    }
+
+    const head = document.createElement('div');
+    head.className = 'board-head';
+    head.innerHTML = `<span class="board-name">${p.name}${p.isAI ? ' 🤖' : ''}</span><span class="board-dist">${p.distance} / ${GOAL}</span>`;
+    board.appendChild(head);
+
+    const piles = document.createElement('div');
+    piles.className = 'tableau-piles';
+    piles.appendChild(pileSlot('Bataille', p.battlePile, 'En attente'));
+    piles.appendChild(pileSlot('Vitesse', p.speedPile, 'Libre'));
+    piles.appendChild(safetySlot(p.safetyCards));
+    piles.appendChild(pileSlot('Kilométrage', p.distancePile, 'Départ'));
+    board.appendChild(piles);
+
+    const handCount = document.createElement('div');
+    handCount.className = 'hand-count';
+    handCount.textContent = `🂠 ${p.hand.length} en main`;
+    board.appendChild(handCount);
+
+    els.playerBoards.appendChild(board);
+  }
+}
+
+function pileSlot(label, cards, emptyLabel) {
+  const slot = document.createElement('div');
+  slot.className = 'pile-slot';
+  const lbl = document.createElement('div');
+  lbl.className = 'pile-slot-label';
+  lbl.textContent = label;
+  slot.appendChild(lbl);
+  slot.appendChild(pileStackEl(cards, emptyLabel));
+  return slot;
+}
+
+function safetySlot(cards) {
+  const slot = document.createElement('div');
+  slot.className = 'pile-slot';
+  const lbl = document.createElement('div');
+  lbl.className = 'pile-slot-label';
+  lbl.textContent = 'Bottes';
+  slot.appendChild(lbl);
+  if (cards.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'pile-empty';
+    empty.textContent = 'Aucune';
+    slot.appendChild(empty);
+  } else {
+    const row = document.createElement('div');
+    row.className = 'safety-row';
+    for (const c of cards) row.appendChild(cardFace(c, 'pile-card'));
+    slot.appendChild(row);
+  }
+  return slot;
+}
+
+function pileStackEl(cards, emptyLabel) {
+  if (cards.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'pile-empty';
+    empty.textContent = emptyLabel;
+    return empty;
+  }
+  const stack = document.createElement('div');
+  stack.className = 'pile-cards';
+  cards.forEach((c, i) => {
+    const el = cardFace(c, 'pile-card');
+    const offset = Math.min(i, 6) * 3;
+    el.style.top = `${offset}px`;
+    el.style.left = `${offset}px`;
+    el.style.zIndex = String(i);
+    stack.appendChild(el);
+  });
+  return stack;
+}
+
+function rulesContentHtml({ withGoal }) {
+  const goal = withGoal
+    ? `<p class="muted"><strong>But du jeu :</strong> soyez le premier à parcourir exactement <strong>1000 bornes</strong> pour remporter la course !</p>`
+    : '';
+  return `
+    <h3>Comment jouer ?</h3>
+    ${goal}
+    <ol class="help-steps">
+      <li>Piochez une carte pour commencer votre tour.</li>
+      <li>Sélectionnez une carte de votre main.</li>
+      <li>Jouez-la (choisissez un adversaire pour une Attaque) ou défaussez-la.</li>
+    </ol>
+    <ul class="help-list">
+      <li><span class="swatch swatch-distance"></span> <span><strong>Distance</strong> — avance ta voiture. Il faut d'abord jouer un Feu Vert pour démarrer.</span></li>
+      <li><span class="swatch swatch-hazard"></span> <span><strong>Attaque</strong> — bloque ou ralentit un adversaire en route.</span></li>
+      <li><span class="swatch swatch-remedy"></span> <span><strong>Parade</strong> — répare ta voiture pour repartir.</span></li>
+      <li><span class="swatch swatch-safety"></span> <span><strong>Botte</strong> — te protège pour toujours contre une attaque et te fait rejouer aussitôt. Jouée juste après avoir été attaqué, c'est un <strong>Coup Fourré</strong> : l'attaque est annulée et tu rejoues immédiatement.</span></li>
+    </ul>
+    <p class="muted">Le tableau de chaque joueur montre ses piles : Bataille (pannes/réparations), Vitesse (limitation), Bottes (protections) et Kilométrage (bornes parcourues). Ne dépassez jamais 1000 bornes pile !</p>
+  `;
 }
 
 function renderHelp() {
@@ -167,22 +225,7 @@ function renderHelp() {
   if (!helpOpen) return;
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
-  backdrop.innerHTML = `
-    <div class="modal-box text-left">
-      <h3>Comment jouer ?</h3>
-      <ol class="help-steps">
-        <li>Piochez une carte pour commencer votre tour.</li>
-        <li>Sélectionnez une carte de votre main.</li>
-        <li>Jouez-la (choisissez un adversaire pour une Attaque) ou défaussez-la.</li>
-      </ol>
-      <ul class="help-list">
-        <li><span class="swatch swatch-distance"></span> <span><strong>Distance</strong> — avance ta voiture. Il faut d'abord jouer un Feu Vert pour démarrer.</span></li>
-        <li><span class="swatch swatch-hazard"></span> <span><strong>Attaque</strong> — bloque ou ralentit un adversaire en route.</span></li>
-        <li><span class="swatch swatch-remedy"></span> <span><strong>Parade</strong> — répare ta voiture pour repartir.</span></li>
-        <li><span class="swatch swatch-safety"></span> <span><strong>Botte</strong> — te protège pour toujours contre une attaque et te fait rejouer aussitôt.</span></li>
-      </ul>
-      <p class="muted">Premier à exactement 1000 bornes : victoire !</p>
-    </div>`;
+  backdrop.innerHTML = `<div class="modal-box text-left">${rulesContentHtml({ withGoal: true })}</div>`;
   const closeBtn = document.createElement('button');
   closeBtn.className = 'btn btn-primary';
   closeBtn.textContent = 'Compris !';
@@ -193,49 +236,22 @@ function renderHelp() {
   els.helpModalRoot.appendChild(backdrop);
 }
 
-function renderOpponents() {
-  els.opponentsRow.innerHTML = '';
-  const activePlayer = getActivePlayer(state);
-  const selectedCard = state.selectedCardId ? state.cardsById.get(state.selectedCardId) : null;
-  let validTargetIds = new Set();
-  if (selectedCard && selectedCard.type === 'hazard' && !activePlayer.isAI && !state.pendingCoupFourre) {
-    validTargetIds = new Set(getValidTargets(state, activePlayer, selectedCard).map((p) => p.id));
-  }
-
-  for (const p of state.players) {
-    if (p.id === state.activePlayerId) continue;
-    const card = document.createElement('div');
-    const canTarget = validTargetIds.has(p.id);
-    card.className = `opp-card${canTarget ? ' can-target' : ''}`;
-    if (canTarget) {
-      card.onclick = () => {
-        playCardAction(state, activePlayer.id, selectedCard.id, p.id);
-        render();
-      };
-    }
-
-    const head = document.createElement('div');
-    head.className = 'opp-head';
-    head.innerHTML = `<span class="opp-name">${p.name}${p.isAI ? ' 🤖' : ''}</span><span class="opp-dist">${p.distance} / ${GOAL}</span>`;
-    card.appendChild(head);
-
-    const statusRow = document.createElement('div');
-    statusRow.className = 'opp-status-row';
-    statusRow.appendChild(chip(battleStatusInfo(p)));
-    const sp = speedStatusInfo(p);
-    if (sp) statusRow.appendChild(chip(sp));
-    const safetyWrap = document.createElement('span');
-    safetyWrap.className = 'safety-icons';
-    safetyWrap.innerHTML = p.safetyCards.map((c) => `<span title="${c.label}">${c.icon}</span>`).join('');
-    statusRow.appendChild(safetyWrap);
-    const handCount = document.createElement('span');
-    handCount.className = 'hand-count';
-    handCount.textContent = `🂠 ${p.hand.length}`;
-    statusRow.appendChild(handCount);
-    card.appendChild(statusRow);
-
-    els.opponentsRow.appendChild(card);
-  }
+// Affiche le but du jeu et les règles avant le début d'une partie ; onConfirm est appelé
+// une fois l'écran fermé (bouton ou clic hors de la boîte).
+export function showRulesIntro(onConfirm) {
+  els.helpModalRoot.innerHTML = '';
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `<div class="modal-box text-left">${rulesContentHtml({ withGoal: true })}</div>`;
+  const startBtn = document.createElement('button');
+  startBtn.className = 'btn btn-primary';
+  startBtn.textContent = 'Commencer la partie !';
+  startBtn.style.marginTop = '14px';
+  const proceed = () => { els.helpModalRoot.innerHTML = ''; onConfirm(); };
+  startBtn.onclick = proceed;
+  backdrop.querySelector('.modal-box').appendChild(startBtn);
+  backdrop.onclick = (e) => { if (e.target === backdrop) proceed(); };
+  els.helpModalRoot.appendChild(backdrop);
 }
 
 function renderTable() {
@@ -263,28 +279,10 @@ function escapeHtml(s) {
 
 function renderActivePanel() {
   const player = getActivePlayer(state);
-  els.activeTableau.innerHTML = '';
-
-  const nameEl = document.createElement('span');
-  nameEl.className = 'tableau-name';
-  nameEl.textContent = `${player.name}${player.isAI ? ' 🤖' : ''} — ${player.distance} / ${GOAL} bornes`;
-  els.activeTableau.appendChild(nameEl);
-  els.activeTableau.appendChild(chip(battleStatusInfo(player)));
-  const sp = speedStatusInfo(player);
-  if (sp) els.activeTableau.appendChild(chip(sp));
-  for (const c of player.safetyCards) {
-    const s = document.createElement('span');
-    s.className = 'status-chip ok';
-    s.textContent = `${c.icon} ${c.label}`;
-    els.activeTableau.appendChild(s);
-  }
-
-  const isHumanTurn = state.phase === 'playing' && !player.isAI && !state.pendingCoupFourre;
-  const needsReveal = isHumanTurn && revealedFor !== player.id;
-
   els.handRow.innerHTML = '';
   els.actionHint.textContent = '';
   els.playBtn.disabled = true;
+  els.handHeader.textContent = state.phase === 'playing' ? `${player.name}${player.isAI ? ' 🤖' : ''} — votre main` : '';
 
   if (state.phase !== 'playing') {
     els.handRow.innerHTML = '';
@@ -311,6 +309,7 @@ function renderActivePanel() {
     return;
   }
 
+  const needsReveal = revealedFor !== player.id;
   if (needsReveal) {
     const overlay = document.createElement('button');
     overlay.className = 'btn btn-primary';
@@ -414,21 +413,45 @@ function renderModals() {
 
   if (state.phase === 'gameover') {
     const winner = state.players.find((p) => p.id === state.winnerId);
-    const standings = [...state.players].sort((a, b) => b.distance - a.distance);
+    const scores = computeFinalScores(state);
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     const box = document.createElement('div');
     box.className = 'modal-box';
-    box.innerHTML = `<h3>🏆 ${winner.name} remporte la course !</h3>`;
-    const list = document.createElement('div');
-    list.className = 'standings';
-    for (const p of standings) {
+    box.innerHTML = `<h3>🏆 ${winner.name} remporte la course !</h3><p class="muted">Feuille de score officielle</p>`;
+
+    const sheet = document.createElement('div');
+    sheet.className = 'score-sheet';
+    for (const { player, breakdown, total } of scores) {
       const row = document.createElement('div');
-      row.className = `standings-row${p.id === winner.id ? ' winner' : ''}`;
-      row.innerHTML = `<span>${p.name}${p.isAI ? ' 🤖' : ''}</span><span>${p.distance} bornes</span>`;
-      list.appendChild(row);
+      row.className = `score-player${player.id === winner.id ? ' winner' : ''}`;
+      const head = document.createElement('div');
+      head.className = 'score-player-head';
+      head.innerHTML = `<span class="name">${player.name}${player.isAI ? ' 🤖' : ''}</span><span class="total">${total} pts</span>`;
+      row.appendChild(head);
+
+      const lines = document.createElement('div');
+      lines.className = 'score-lines';
+      const items = [
+        ['Distance parcourue', breakdown.distance],
+        ['Bottes jouées', breakdown.safety],
+        ['Toutes les bottes', breakdown.allSafety],
+        ['Coup(s) fourré(s)', breakdown.coupFourre],
+        ['Voyage terminé', breakdown.tripCompleted],
+        ['Voyage sans accroc', breakdown.safeTrip],
+        ['Capot adverse', breakdown.shutout],
+      ];
+      for (const [label, value] of items) {
+        const line = document.createElement('div');
+        line.className = `score-line${value ? ' nonzero' : ''}`;
+        line.innerHTML = `<span>${label}</span><span>${value ? '+' + value : '—'}</span>`;
+        lines.appendChild(line);
+      }
+      row.appendChild(lines);
+      sheet.appendChild(row);
     }
-    box.appendChild(list);
+    box.appendChild(sheet);
+
     const actions = document.createElement('div');
     actions.className = 'modal-actions';
     const again = document.createElement('button');

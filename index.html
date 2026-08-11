@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mille Bornes</title>
+<title>Rallye Express</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏁</text></svg>">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div id="app">
   <header class="app-header">
-    <h1>🏁 Mille Bornes</h1>
+    <h1>🏁 Rallye Express</h1>
     <div class="header-actions">
       <button id="help-btn" class="btn btn-ghost btn-sm" title="Comment jouer ?">? Règles</button>
       <button id="restart-btn" class="btn btn-ghost" hidden>Nouvelle partie</button>
@@ -44,15 +44,9 @@
   </main>
 
   <main id="game-screen" class="screen" hidden>
-    <section class="track-panel">
-      <div class="track-header">
-        <span>Départ</span>
-        <span>1000 bornes 🏁</span>
-      </div>
-      <div id="track-lanes" class="track-lanes"></div>
+    <section class="board-panel">
+      <div id="player-boards" class="player-boards"></div>
     </section>
-
-    <div id="opponents-row" class="opponents-row"></div>
 
     <div class="table-row">
       <div class="pile-area">
@@ -71,7 +65,7 @@
     </div>
 
     <section id="active-panel" class="active-panel">
-      <div id="active-tableau" class="tableau"></div>
+      <div id="hand-header" class="hand-header"></div>
       <div id="action-hint" class="action-hint"></div>
       <div id="hand-row" class="hand-row"></div>
       <div id="controls-row" class="controls-row">

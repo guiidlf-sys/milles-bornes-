@@ -20,6 +20,8 @@ export function createGame(playerConfigs) {
     distancePile: [],
     distance: 0,
     count200: 0,
+    coupFourreCount: 0,
+    everHit: false,
   }));
 
   const state = {
@@ -296,6 +298,7 @@ function applyEffect(state, player, card, target) {
       break;
     }
     case 'hazard': {
+      target.everHit = true;
       if (card.subtype === 'speed-limit') {
         target.speedPile.push(card);
         target.speedStatus = 'limited';
@@ -322,6 +325,7 @@ function applyCoupFourre(state, player, safetyCard) {
   if (safetyCard.subtype === 'right-of-way' && player.speedStatus === 'limited') {
     player.speedStatus = 'normal';
   }
+  player.coupFourreCount += 1;
   logMsg(state, `⚡ Coup Fourré ! ${player.name} contre-attaque avec ${safetyCard.label} et rejouera bientôt !`);
   state.insertedQueue.push(player.id);
 }
@@ -349,6 +353,29 @@ function advanceTurn(state) {
     state.activePlayerId = state.turnOrder[state.turnIndex];
   }
   state.turnStage = 'needs-draw';
+}
+
+// ---------- Score officiel de fin de partie ----------
+
+export function computeFinalScores(state) {
+  const someoneAtZero = state.players.some((p) => p.id !== state.winnerId && p.distance === 0);
+
+  return state.players
+    .map((p) => {
+      const tripCompleted = p.distance >= GOAL;
+      const breakdown = {
+        distance: p.distance,
+        safety: p.safetyCards.length * 100,
+        allSafety: p.safetyCards.length === 4 ? 300 : 0,
+        coupFourre: p.coupFourreCount * 300,
+        tripCompleted: tripCompleted ? 400 : 0,
+        safeTrip: tripCompleted && !p.everHit ? 300 : 0,
+        shutout: p.id === state.winnerId && someoneAtZero ? 500 : 0,
+      };
+      const total = Object.values(breakdown).reduce((sum, v) => sum + v, 0);
+      return { player: p, breakdown, total };
+    })
+    .sort((a, b) => b.total - a.total);
 }
 
 export { GOAL };

@@ -1,4 +1,4 @@
-// Définition des cartes du jeu Mille Bornes et fabrication du paquet.
+// Définition des cartes du jeu de course et fabrication du paquet.
 
 export const HAZARD_TO_REMEDY = {
   'accident': 'repairs',

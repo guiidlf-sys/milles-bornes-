@@ -1,5 +1,5 @@
 import { createGame } from './game.js';
-import { mountGame } from './ui.js';
+import { mountGame, showRulesIntro } from './ui.js';
 
 const setupScreen = document.getElementById('setup-screen');
 const gameScreen = document.getElementById('game-screen');
@@ -49,7 +49,7 @@ startBtn.addEventListener('click', () => {
     const isAI = row.querySelector('[data-role="type"]').value === 'ai';
     return { name, isAI };
   });
-  startGame(configs);
+  showRulesIntro(() => startGame(configs));
 });
 
 function startGame(configs) {
