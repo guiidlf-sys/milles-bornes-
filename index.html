@@ -17,10 +17,30 @@
     </div>
   </header>
 
-  <main id="setup-screen" class="screen">
+  <main id="mode-screen" class="screen">
+    <div class="setup-card mode-card">
+      <h2>Choisissez un mode</h2>
+      <p class="muted">Le premier à exactement 1000 bornes gagne !</p>
+      <div class="mode-grid">
+        <button id="mode-solo-btn" class="mode-btn">
+          <span class="mode-emoji">🎮</span>
+          <span class="mode-name">Solo</span>
+          <span class="mode-sub">Vous contre 1 à 3 IA</span>
+        </button>
+        <button id="mode-multi-btn" class="mode-btn">
+          <span class="mode-emoji">👥</span>
+          <span class="mode-name">Multijoueur</span>
+          <span class="mode-sub">Plusieurs joueurs sur cet appareil, bots activables</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <main id="setup-screen" class="screen" hidden>
     <div class="setup-card">
-      <h2>Préparer la course</h2>
-      <p class="muted">De 2 à 4 joueurs. Le premier à exactement 1000 bornes gagne !</p>
+      <button id="back-to-mode-btn" class="btn btn-ghost btn-sm back-btn">← Changer de mode</button>
+      <h2 id="setup-title">Préparer la course</h2>
+      <p class="muted" id="setup-subtitle"></p>
       <ul class="rules-mini">
         <li><span class="swatch swatch-distance"></span> Distance : avance ta voiture</li>
         <li><span class="swatch swatch-hazard"></span> Attaque : bloque un adversaire</li>
@@ -28,16 +48,33 @@
         <li><span class="swatch swatch-safety"></span> Botte : protège pour toujours et fait rejouer</li>
       </ul>
 
-      <label class="field">
-        <span>Nombre de joueurs</span>
-        <select id="player-count">
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4" selected>4</option>
-        </select>
-      </label>
+      <div id="solo-fields" hidden>
+        <label class="field">
+          <span>Votre nom</span>
+          <input type="text" id="solo-name" maxlength="20" value="Vous">
+        </label>
+        <label class="field">
+          <span>Nombre d'adversaires IA</span>
+          <select id="ai-count">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+      </div>
 
-      <div id="seat-list" class="seat-list"></div>
+      <div id="multi-fields" hidden>
+        <label class="field">
+          <span>Nombre de joueurs</span>
+          <select id="player-count">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+          </select>
+        </label>
+        <p class="muted field-hint">Activez ou désactivez un bot IA pour chaque siège.</p>
+        <div id="seat-list" class="seat-list"></div>
+      </div>
 
       <button id="start-btn" class="btn btn-primary">Démarrer la course</button>
     </div>

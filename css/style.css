@@ -73,6 +73,36 @@ html, body {
 }
 .setup-card h2 { margin-top: 0; }
 .muted { color: var(--muted); }
+.field-hint { font-size: 0.82rem; margin: -6px 0 10px; }
+
+.mode-card { text-align: center; }
+.mode-grid {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.mode-btn {
+  flex: 1 1 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel-light);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 24px 16px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+.mode-btn:hover { border-color: var(--gold); transform: translateY(-2px); }
+.mode-emoji { font-size: 2.1rem; }
+.mode-name { font-weight: 700; font-size: 1.05rem; }
+.mode-sub { font-size: 0.8rem; color: var(--muted); text-align: center; }
+
+.back-btn { margin-bottom: 14px; }
 
 .rules-mini {
   list-style: none;
