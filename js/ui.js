@@ -59,6 +59,10 @@ els.helpBtn.onclick = () => {
 };
 
 export function mountGame(gameState, restartCallback) {
+  if (aiTimer) {
+    clearTimeout(aiTimer);
+    aiTimer = null;
+  }
   state = gameState;
   onRestart = restartCallback;
   revealedFor = null;
@@ -541,7 +545,7 @@ function renderModals() {
     const again = document.createElement('button');
     again.className = 'btn btn-primary';
     again.textContent = 'Nouvelle partie';
-    again.onclick = () => onRestart();
+    again.onclick = () => { stopClock(); onRestart(); };
     actions.appendChild(again);
     box.appendChild(actions);
     backdrop.appendChild(box);
