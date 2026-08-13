@@ -36,7 +36,7 @@ const DEFS = [
   // Attaques (hazards)
   { type: 'hazard', subtype: 'accident', count: 3, label: 'Accident', icon: '💥', desc: 'Immobilise l’adversaire.' },
   { type: 'hazard', subtype: 'out-of-gas', count: 3, label: "Panne d'Essence", icon: '🪫', desc: 'Immobilise l’adversaire.' },
-  { type: 'hazard', subtype: 'flat-tire', count: 3, label: 'Crevaison', icon: '🕳️', desc: 'Immobilise l’adversaire.' },
+  { type: 'hazard', subtype: 'flat-tire', count: 3, label: 'Crevaison', icon: '🛞💨', desc: 'Immobilise l’adversaire.' },
   { type: 'hazard', subtype: 'speed-limit', count: 4, label: 'Limite de Vitesse', icon: '🐢', desc: 'Limite à 50 km max.' },
   { type: 'hazard', subtype: 'stop', count: 5, label: 'Stop', icon: '🚧', desc: 'Immobilise l’adversaire.' },
 

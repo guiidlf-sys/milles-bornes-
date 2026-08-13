@@ -461,7 +461,21 @@ function backCard() {
 function handCardEl(card, isSelected) {
   const el = cardFace(card, `hand-card${isSelected ? ' selected' : ''}`);
   el.onclick = () => {
-    state.selectedCardId = state.selectedCardId === card.id ? null : card.id;
+    if (state.selectedCardId === card.id) {
+      // Deuxième tap sur une carte déjà sélectionnée : la jouer directement si possible
+      // (en plus du bouton "Jouer"), pour rester tolérant sur mobile.
+      const player = getActivePlayer(state);
+      const evalRes = evaluatePlay(state, player, card);
+      if (evalRes.ok && !evalRes.needsTarget) {
+        playCardAction(state, player.id, card.id, null);
+        render();
+        return;
+      }
+      state.selectedCardId = null;
+      render();
+      return;
+    }
+    state.selectedCardId = card.id;
     render();
   };
   return el;
