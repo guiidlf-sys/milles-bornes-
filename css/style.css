@@ -575,8 +575,8 @@ html, body {
   to { transform: scale(1); opacity: 1; }
 }
 .card {
-  width: 104px;
-  height: 148px;
+  width: 88px;
+  height: 126px;
   border-radius: 12px;
   background: var(--card-bg);
   color: var(--card-ink);
@@ -587,7 +587,7 @@ html, body {
   justify-content: center;
   padding: 8px 5px;
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   line-height: 1.25;
   cursor: default;
   user-select: none;
@@ -599,7 +599,7 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .card { animation: none; }
 }
-.card .card-icon { font-size: 2.3rem; margin-bottom: 4px; }
+.card .card-icon { font-size: 1.85rem; margin-bottom: 4px; }
 .card .card-label { font-weight: 700; }
 .card.card-distance { border-color: var(--blue); background: var(--card-tint-distance); }
 .card.card-hazard { border-color: var(--red); background: var(--card-tint-hazard); }
@@ -697,8 +697,8 @@ html, body {
 .help-steps { padding-left: 20px; margin: 10px 0; text-align: left; font-size: 0.9rem; line-height: 1.5; }
 
 @media (max-width: 640px) {
-  .card { width: 84px; height: 122px; font-size: 0.68rem; }
-  .card .card-icon { font-size: 1.5rem; }
+  .card { width: 76px; height: 108px; font-size: 0.64rem; }
+  .card .card-icon { font-size: 1.3rem; }
   .hero-track { font-size: 2.4rem; gap: 16px; }
   .player-boards { grid-template-columns: 1fr; }
   .track-lane { grid-template-columns: 88px 1fr 54px; gap: 8px; }
