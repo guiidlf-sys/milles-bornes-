@@ -37,6 +37,7 @@ const els = {
   handHeader: document.getElementById('hand-header'),
   actionHint: document.getElementById('action-hint'),
   handRow: document.getElementById('hand-row'),
+  controlsRow: document.getElementById('controls-row'),
   drawBtn: document.getElementById('draw-btn'),
   playBtn: document.getElementById('play-btn'),
   discardBtn: document.getElementById('discard-btn'),
@@ -369,6 +370,8 @@ function renderActivePanel() {
   els.actionHint.textContent = '';
   els.playBtn.disabled = true;
   els.handHeader.textContent = state.phase === 'playing' ? `${player.name}${player.isAI ? ' 🤖' : ''} — votre main` : '';
+  els.handRow.hidden = false;
+  els.controlsRow.hidden = false;
 
   if (state.phase !== 'playing') {
     els.handRow.innerHTML = '';
@@ -378,20 +381,20 @@ function renderActivePanel() {
   }
 
   if (player.isAI) {
+    // Pendant le tour de l'IA, on masque la main et les contrôles (inutiles pour
+    // le joueur humain) afin de laisser plus de place visible au plateau au-dessus.
+    els.handRow.hidden = true;
+    els.controlsRow.hidden = true;
+    els.handHeader.textContent = '';
     els.actionHint.textContent = `🤖 ${player.name} réfléchit...`;
-    for (let i = 0; i < player.hand.length; i++) {
-      els.handRow.appendChild(backCard());
-    }
-    els.drawBtn.disabled = true;
-    els.discardBtn.disabled = true;
     return;
   }
 
   if (state.pendingCoupFourre) {
+    els.handRow.hidden = true;
+    els.controlsRow.hidden = true;
+    els.handHeader.textContent = '';
     els.actionHint.textContent = 'En attente d’une décision de coup fourré...';
-    for (let i = 0; i < player.hand.length; i++) els.handRow.appendChild(backCard());
-    els.drawBtn.disabled = true;
-    els.discardBtn.disabled = true;
     return;
   }
 
@@ -450,12 +453,6 @@ function renderActivePanel() {
   } else {
     els.actionHint.textContent = 'Carte valide : cliquez sur "Jouer la carte sélectionnée".';
   }
-}
-
-function backCard() {
-  const div = document.createElement('div');
-  div.className = 'card card-back';
-  return div;
 }
 
 function handCardEl(card, isSelected) {

@@ -568,6 +568,7 @@ html, body {
 }
 
 .controls-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.hand-row[hidden], .controls-row[hidden] { display: none; }
 
 /* ---------- Cards ---------- */
 @keyframes cardPop {
